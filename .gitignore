@@ -1,0 +1,15 @@
+# Ignored Files
+*.pyc
+*.spyproject
+*.xml
+*.jpg
+*.JPG
+*.png
+*.vscode
+*.pth
+*.ipynb_checkpoints
+/experiments/**/tboard/
+
+File
+
+
