@@ -23,4 +23,4 @@ The idea then is to pre-train networks via pretext tasks that do not require exp
 As we have discussed, self-supervision is abut defining a pretext task for which labels are generated form the data itself. One such simplest pretext task is Rotation. The idea is very simple - take an image X and rotate it by various degree, for e.g. (0,90,180). so you input is image and its corresponding label is the degree of orientation. And for here on you train it in the traditional supervised way. Once learned on rotation this network can bes used for transfer learning for your mainn task.
 
 #### Pretext Task (predicting rotation)
-![alt text](https://github.com/anujshah1003/self_supervised_learning/tree/master/readme_imgs/rotation.png)
+![alt text](https://github.com/anujshah1003/self_supervised_learning/blob/master/readme_imgs/rotation.png)
