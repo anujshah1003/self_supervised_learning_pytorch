@@ -19,7 +19,7 @@ When you incoporate self-supervision in your training pipeline, two terms you ou
 The idea then is to pre-train networks via pretext tasks that do not require expensive manual annotations and can be automatically generated from the data itself. Once pre-trained, networks can be applied to a target task by using only a modest amount of labelled data.
 
 ## Self-Supervision (Pretext Task)
-
+The dataset and problem I am using is flowers category recognition form kaggle - https://www.kaggle.com/alxmamaev/flowers-recognition
 As we have discussed, self-supervision is abut defining a pretext task for which labels are generated form the data itself. One such simplest pretext task is Rotation. The idea is very simple - take an image X and rotate it by various degree, for e.g. (0,90,180). so you input is image and its corresponding label is the degree of orientation. And for here on you train it in the traditional supervised way. Once learned on rotation this network can bes used for transfer learning for your mainn task.
 
 #### Pretext Task (predicting degree of rotation)
