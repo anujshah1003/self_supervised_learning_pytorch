@@ -36,7 +36,7 @@ else:
 torch.set_default_tensor_type(dtype)
 #%%
 
-def train(epoch, model, device, dataloader, optimizer, exp_lr_scheduler, criterion, experiment_dir, writer):
+def train(epoch, model, device, dataloader, optimizer, scheduler, criterion, experiment_dir, writer):
     """ Train loop, predict rotations. """
     loss_record = utils.RunningAverage()
     acc_record = utils.RunningAverage()
@@ -72,12 +72,13 @@ def train(epoch, model, device, dataloader, optimizer, exp_lr_scheduler, criteri
         loss.backward()
         optimizer.step()
         
-    if exp_lr_scheduler:  
-        exp_lr_scheduler.step()
+    if scheduler:  
+        scheduler.step()
+    LR=optimizer.param_groups[0]['lr']
 
     writer.add_scalar('Loss_epoch/train', loss_record(), epoch)
     writer.add_scalar('Acc_epoch/train', acc_record(), epoch)
-    logging.info('Train Epoch: {} Avg Loss: {:.4f}; Avg Acc: {:.4f}'.format(epoch, loss_record(), acc_record()))
+    logging.info('Train Epoch: {} LR: {:.5f} Avg Loss: {:.4f}; Avg Acc: {:.4f}'.format(epoch+1,LR, loss_record(), acc_record()))
 
     return loss_record,acc_record
 
@@ -110,7 +111,10 @@ def train_and_evaluate(cfg):
 
     # follow the same setting as RotNet paper
     optimizer = optim.SGD(model.parameters(), lr=float(cfg.lr), momentum=float(cfg.momentum), weight_decay=5e-4, nesterov=True)
-    exp_lr_scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[60, 120, 160, 200], gamma=0.2)
+    if cfg.scheduler:
+        scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[60, 120, 160, 200], gamma=0.2)
+    else:
+        scheduler=None
     criterion = nn.CrossEntropyLoss()
 
     best_loss = 1000
@@ -118,13 +122,13 @@ def train_and_evaluate(cfg):
         
 #        print('\nTrain for Epoch: {}/{}'.format(epoch,cfg.num_epochs))
         logging.info('\nTrain for Epoch: {}/{}'.format(epoch,cfg.num_epochs))
-        train_loss,train_acc = train(epoch, model, device, dloader_train, optimizer, exp_lr_scheduler, criterion, experiment_dir, writer)
+        train_loss,train_acc = train(epoch, model, device, dloader_train, optimizer, scheduler, criterion, experiment_dir, writer)
         
         # validate after every epoch
 #        print('\nValidate for Epoch: {}/{}'.format(epoch,cfg.num_epochs))
         logging.info('\nValidate for Epoch: {}/{}'.format(epoch,cfg.num_epochs))
         val_loss,val_acc = validate(epoch, model, device, dloader_val, criterion, experiment_dir, writer)
-        logging.info('Val Epoch: {} Avg Loss: {:.4f} \t Avg Acc: {:.4f}'.format(epoch, val_loss, val_acc))
+        logging.info('Val Epoch: {} Avg Loss: {:.4f} \t Avg Acc: {:.4f}'.format(epoch+1, val_loss, val_acc))
 
         is_best = val_loss < best_loss
         best_loss = min(val_loss, best_loss)
@@ -155,5 +159,15 @@ if __name__=='__main__':
 
 OSError: [Errno 24] Too many open files: 'D:\\2020\\Trainings\\self-supervised-learning\\dataset\\flowers\\tulip\\tulip_000826.png'
 to solve this
+
+multistepLR
+>>> # lr = 0.05     if epoch < 30
+>>> # lr = 0.005    if 30 <= epoch < 80
+>>> # lr = 0.0005   if epoch >= 80
+But we may have a list gammas, such as milestones=[30, 80], gamma=[0.1, 0.2]
+
+>>> # lr = 0.05     if epoch < 30
+>>> # lr = 0.05*0.1    if 30 <= epoch < 80
+>>> # lr = 0.05*0.1*0.2   if epoch >= 80
 
 '''

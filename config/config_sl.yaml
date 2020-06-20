@@ -34,6 +34,7 @@ ssl_weight: 'resnet18_4rot_epoch0_best.pth'
 network: 'resnet18'
 lr: 1e-2
 momentum: 9e-1
+scheduler: False
 
 # Training Parameters
 num_epochs: 2

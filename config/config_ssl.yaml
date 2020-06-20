@@ -16,8 +16,8 @@ std_val: [0.09158824,0.09528065,0.20864842]#[23.35500145,24.29656621,53.20534792
 #paths
 root_path: 'D:\2020\Trainings\self_supervised_learning'
 data_path: 'dataset'
-exp_type: 'supervised' # 'supervised' or 'self-supervised'
-save_dir: 'sl_exp_1'
+exp_type: 'self-supervised' # 'supervised' or 'self-supervised'
+save_dir: 'ssl_exp_1'
 imgs_dir: 'flowers'
 labels_dir: 'annotations'
 log: 'train.log'
@@ -31,9 +31,10 @@ num_rot: 4
 network: 'resnet18'
 lr: 1e-2
 momentum: 9e-1
+scheduler: True
 
 # Training Parameters
-num_epochs: 2
+num_epochs: 8
 batch_size: 2
 mean_norm: False
 img_sz: 100
