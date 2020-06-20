@@ -143,11 +143,11 @@ def train_and_evaluate(cfg):
     logging.info('Test: Avg Loss: {:.4f} \t Avg Acc: {:.4f}'.format(test_loss, test_acc))
 
     # save the configuration file within that experiment directory
-    utils.save_yaml(cfg,save_path=os.path.join(experiment_dir,'config.yaml'))
+    utils.save_yaml(cfg,save_path=os.path.join(experiment_dir,'config_ssl.yaml'))
     logging.info('-----------End of Experiment------------')
   
 if __name__=='__main__':
-    config_file='config/config.yaml'
+    config_file='config/config_ssl.yaml'
     cfg = utils.load_yaml(config_file,config_type='object')
     train_and_evaluate(cfg)
     

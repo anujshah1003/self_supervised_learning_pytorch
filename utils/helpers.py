@@ -35,7 +35,7 @@ def save_checkpoint(state, is_best, save_path, checkpoint='checkpoint.pth', best
     if is_best:
         shutil.copyfile(save_path + '/' + checkpoint, save_path + '/' + best_model)
 
-def load_checkpoint(checkpoint, model, optimizer=None,cuda_num=None):
+def load_checkpoint(checkpoint, model, device='cuda',optimizer=None):
     """Loads model parameters (state_dict) from file_path. If optimizer is provided, loads state_dict of
     optimizer assuming it is present in checkpoint.
     Args:
@@ -43,13 +43,10 @@ def load_checkpoint(checkpoint, model, optimizer=None,cuda_num=None):
         model: (torch.nn.Module) model for which the parameters are loaded
         optimizer: (torch.optim) optional: resume optimizer from checkpoint
     """
-    if cuda_num==None:
-        map_location='cpu'
-    else:
-        map_location='cuda:{}'.format(cuda_num)
+
     if not os.path.exists(checkpoint):
         raise("File doesn't exist {}".format(checkpoint))
-    checkpoint = torch.load(checkpoint,map_location=map_location)
+    checkpoint = torch.load(checkpoint,map_location=device)
     try:
         model.load_state_dict(checkpoint['state_dict'],strict=False)
     except:

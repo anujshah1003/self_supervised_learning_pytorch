@@ -16,15 +16,19 @@ std_val: [0.09158824,0.09528065,0.20864842]#[23.35500145,24.29656621,53.20534792
 #paths
 root_path: 'D:\2020\Trainings\self_supervised_learning'
 data_path: 'dataset'
-exp_type: 'self-supervised' # 'supervised' or 'self-supervised'
-save_dir: 'ssl_exp_1'
+exp_type: 'supervised' # 'supervised' or 'self-supervised'
+save_dir: 'sl_exp_1'
 imgs_dir: 'flowers'
 labels_dir: 'annotations'
 log: 'train.log'
 
 # Self Supervised Params
-pretext: 'rotation'
+pretext: False
 num_rot: 4
+
+#supervised params
+ssl_pretrained_exp_path: 'ssl_exp_1'
+ssl_weight: 'resnet18_4rot_epoch0_best.pth'
 
 #model parameters
 network: 'resnet18'
@@ -39,6 +43,9 @@ img_sz: 100
 cuda_num: 2
 use_cuda: False
 data_aug: False #['randomhorizontalflip','randomcrop']# None
+
+# pretrained model
+
 
 #saving parameters
 save_intermediate_weights: 5 # After how many epoch to save the weights
