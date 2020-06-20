@@ -32,7 +32,7 @@ lr: 1e-2
 momentum: 9e-1
 
 # Training Parameters
-num_epochs: 1
+num_epochs: 2
 batch_size: 2
 mean_norm: False
 img_sz: 100

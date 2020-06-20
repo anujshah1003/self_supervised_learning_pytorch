@@ -37,8 +37,8 @@ def validate(epoch, model, device, dataloader, criterion, args, writer):
             #print('val Step: {}/{} Loss: {:.4f} \t Acc: {:.4f}'.format(batch_idx,len(dataloader), loss_record(), acc_record()))
 
 
-    writer.add_scalar('Loss/validation', loss_record(), epoch)
-    writer.add_scalar('Accuracy/validation', acc_record(), epoch)
+    writer.add_scalar('Loss_epoch/validation', loss_record(), epoch)
+    writer.add_scalar('Acc_epoch/validation', acc_record(), epoch)
     
     return loss_record(),acc_record()
 
