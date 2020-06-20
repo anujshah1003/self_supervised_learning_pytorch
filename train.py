@@ -21,6 +21,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 
 #from lshash.lshash import LSHash
+import logging
 
 import utils
 import models
@@ -64,7 +65,7 @@ def train(epoch, model, device, dataloader, optimizer, exp_lr_scheduler, criteri
         writer.add_scalar('Loss/train', loss.item(), epoch + batch_idx)
         writer.add_scalar('Acc/train', loss.item(), epoch + batch_idx)
 
-        print('Train Step: {}/{} Loss: {:.4f}; Acc: {:.4f}'.format(batch_idx,len(dataloader), loss_record(), acc_record()))
+#        logging.info('Train Step: {}/{} Loss: {:.4f}; Acc: {:.4f}'.format(batch_idx,len(dataloader), loss_record(), acc_record()))
 
         # compute gradient and do optimizer step
         optimizer.zero_grad()
@@ -76,28 +77,31 @@ def train(epoch, model, device, dataloader, optimizer, exp_lr_scheduler, criteri
 
     writer.add_scalar('Loss_epoch/train', loss_record(), epoch)
     writer.add_scalar('Acc_epoch/train', acc_record(), epoch)
-    print('Train Epoch: {} Avg Loss: {:.4f}; Avg Acc: {:.4f}'.format(epoch, loss_record(), acc_record()))
+    logging.info('Train Epoch: {} Avg Loss: {:.4f}; Avg Acc: {:.4f}'.format(epoch, loss_record(), acc_record()))
 
     return loss_record,acc_record
 
 #%%  
-def train_and_evaluate(params):
+def train_and_evaluate(cfg):
     
-    # Training settings
-    experiment_dir = os.path.join('experiments',params.save_dir)
+    #Training settings
+    experiment_dir = os.path.join('experiments',cfg.exp_type,cfg.save_dir)
     if not os.path.exists(experiment_dir):
         os.makedirs(experiment_dir)
-    use_cuda = params.use_cuda and torch.cuda.is_available()
-    params.use_cuda=use_cuda
-    device = torch.device("cuda:{}".format(params.cuda_num) if use_cuda else "cpu")
+        
+    utils.set_logger(os.path.join(experiment_dir,cfg.log))
+    logging.info('-----------Starting Experiment------------')
+    use_cuda = cfg.use_cuda and torch.cuda.is_available()
+    cfg.use_cuda=use_cuda
+    device = torch.device("cuda:{}".format(cfg.cuda_num) if use_cuda else "cpu")
     # initialize the tensorbiard summary writer
     writer = SummaryWriter(experiment_dir + '/tboard' )
 
     ## get the dataloaders
-    dloader_train,dloader_test = dataloaders.get_dataloaders(params)
+    dloader_train,dloader_val,dloader_test = dataloaders.get_dataloaders(cfg,val_split=.2)
     
     # Load the model
-    model = models.get_model(params)
+    model = models.get_model(cfg)
     model = model.to(device)
 
     images,_ ,_,_ = next(iter(dloader_train))
@@ -105,37 +109,43 @@ def train_and_evaluate(params):
     writer.add_graph(model, images)
 
     # follow the same setting as RotNet paper
-    optimizer = optim.SGD(model.parameters(), lr=float(params.lr), momentum=float(params.momentum), weight_decay=5e-4, nesterov=True)
+    optimizer = optim.SGD(model.parameters(), lr=float(cfg.lr), momentum=float(cfg.momentum), weight_decay=5e-4, nesterov=True)
     exp_lr_scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[60, 120, 160, 200], gamma=0.2)
     criterion = nn.CrossEntropyLoss()
 
     best_loss = 1000
-    for epoch in range(params.num_epochs + 1):
+    for epoch in range(cfg.num_epochs + 1):
         
-        print('\nTrain for Epoch: {}/{}'.format(epoch,params.num_epochs))
+#        print('\nTrain for Epoch: {}/{}'.format(epoch,cfg.num_epochs))
+        logging.info('\nTrain for Epoch: {}/{}'.format(epoch,cfg.num_epochs))
         train_loss,train_acc = train(epoch, model, device, dloader_train, optimizer, exp_lr_scheduler, criterion, experiment_dir, writer)
         
         # validate after every epoch
-        print('\nValidate for Epoch: {}/{}'.format(epoch,params.num_epochs))
-        val_loss,val_acc = validate(epoch, model, device, dloader_test, criterion, experiment_dir, writer)
+#        print('\nValidate for Epoch: {}/{}'.format(epoch,cfg.num_epochs))
+        logging.info('\nValidate for Epoch: {}/{}'.format(epoch,cfg.num_epochs))
+        val_loss,val_acc = validate(epoch, model, device, dloader_val, criterion, experiment_dir, writer)
+        logging.info('Val Epoch: {} Avg Loss: {:.4f} \t Avg Acc: {:.4f}'.format(epoch, val_loss, val_acc))
 
-        is_best = val_loss() < best_loss
-        best_loss = min(val_loss(), best_loss)
-        if epoch % params.save_intermediate_weights==0:
+        is_best = val_loss < best_loss
+        best_loss = min(val_loss, best_loss)
+        if epoch % cfg.save_intermediate_weights==0:
             utils.save_checkpoint({'Epoch': epoch,'state_dict': model.state_dict(),
                                    'optim_dict' : optimizer.state_dict()}, 
-                                    is_best, experiment_dir, checkpoint='{}_{}rot_epoch{}_checkpoint.pth'.format( params.network.lower(), str(params.num_rot),str(epoch)),\
+                                    is_best, experiment_dir, checkpoint='{}_{}rot_epoch{}_checkpoint.pth'.format( cfg.network.lower(), str(cfg.num_rot),str(epoch)),\
                                     
-                                    best_model='{}_{}rot_epoch{}_best.pth'.format(params.network.lower(), str(params.num_rot),str(epoch))
+                                    best_model='{}_{}rot_epoch{}_best.pth'.format(cfg.network.lower(), str(cfg.num_rot),str(epoch))
                                     )
     writer.close()
     
-    print('\nEvaluate on Test')
+#    print('\nEvaluate on test')
+    logging.info('\nEvaluate on test')
     test_loss,test_acc = test(model, device, dloader_test, criterion, experiment_dir)
-    
+    logging.info('Test: Avg Loss: {:.4f} \t Avg Acc: {:.4f}'.format(test_loss, test_acc))
+
     # save the configuration file within that experiment directory
-    utils.save_yaml(params,save_path=os.path.join(experiment_dir,'config.yaml'))
-    
+    utils.save_yaml(cfg,save_path=os.path.join(experiment_dir,'config.yaml'))
+    logging.info('-----------End of Experiment------------')
+  
 if __name__=='__main__':
     config_file='config/config.yaml'
     cfg = utils.load_yaml(config_file,config_type='object')

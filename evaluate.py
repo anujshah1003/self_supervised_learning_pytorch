@@ -2,6 +2,11 @@ import utils
 from tqdm import tqdm
 from itertools import islice
 import torch
+import os
+import dataloaders
+import models
+import torch.nn as nn
+
 
 if torch.cuda.is_available():
     dtype = torch.cuda.FloatTensor
@@ -29,14 +34,13 @@ def validate(epoch, model, device, dataloader, criterion, args, writer):
     #        acc_record.update(100 * acc[0].item())
             acc_record.update(100*acc[0].item()/data.size(0))
             loss_record.update(loss.item())
-            print('val Step: {}/{} Loss: {:.4f} \t Acc: {:.4f}'.format(batch_idx,len(dataloader), loss_record(), acc_record()))
+            #print('val Step: {}/{} Loss: {:.4f} \t Acc: {:.4f}'.format(batch_idx,len(dataloader), loss_record(), acc_record()))
 
 
     writer.add_scalar('Loss/validation', loss_record(), epoch)
     writer.add_scalar('Accuracy/validation', acc_record(), epoch)
     
-    print('Val Epoch: {} Avg Loss: {:.4f} \t Avg Acc: {:.4f}'.format(epoch, loss_record(), acc_record()))
-    return acc_record,loss_record
+    return loss_record(),acc_record()
 
 def test( model, device, dataloader, criterion, args):
     """ Test loop, print metrics """
@@ -55,7 +59,33 @@ def test( model, device, dataloader, criterion, args):
     #        acc_record.update(100 * acc[0].item())
             acc_record.update(100*acc[0].item()/data.size(0))
             loss_record.update(loss.item())
-            print('Test Step: {}/{} Loss: {:.4f} \t Acc: {:.4f}'.format(batch_idx,len(dataloader), loss_record(), acc_record()))
+#            print('Test Step: {}/{} Loss: {:.4f} \t Acc: {:.4f}'.format(batch_idx,len(dataloader), loss_record(), acc_record()))
 
-    print('Test: Avg Loss: {:.4f} \t Avg Acc: {:.4f}'.format(loss_record(), acc_record()))
-    return loss_record,acc_record
+    return loss_record(),acc_record()
+
+if __name__=='__main__':
+    
+    experiment_dir = r'D:\2020\Trainings\self_supervised_learning\experiments\sl_exp_1'
+    config_file=os.path.join(experiment_dir,'config.yaml')
+    
+    assert os.path.isfile(config_file), "No parameters config file found at {}".format(config_file)
+
+    cfg = utils.load_yaml(config_file,config_type='object')
+
+    use_cuda = cfg.use_cuda and torch.cuda.is_available()
+    cfg.use_cuda=use_cuda
+    device = torch.device("cuda:{}".format(cfg.cuda_num) if use_cuda else "cpu")
+
+
+    ## get the dataloaders
+    _,_,dloader_test = dataloaders.get_dataloaders(cfg,val_split=.2)
+    
+    
+    # Load the model
+    model = models.get_model(cfg)
+    model = model.to(device)
+    criterion = nn.CrossEntropyLoss()
+    
+    test_loss,test_acc = test(model, device, dloader_test, criterion, experiment_dir)
+
+    print('Test: Avg Loss: {:.4f} \t Avg Acc: {:.4f}'.format(test_loss, test_acc))

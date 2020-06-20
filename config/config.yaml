@@ -1,14 +1,26 @@
 # Dataset Parameters
 num_classes: 5
-labels_to_class: {0:'daisy',1:'dandelion',2:'rose',3:'sunflower',4:'tulip'}
-class_to_labels: {'daisy':0,'dandelion':1,'rose':2,'sunflower':3,'tulip':4}
+# define lebels to class dictionary
+labels_to_class:
+  0: 'daisy'
+  1: 'dandelion'
+  2: 'rose'
+  3: 'sunflower'
+  4: 'tulip'
+
+mean_val: [0.57711623,0.57658564,0.47776383]#[147.16463878,147.02933698,121.82977662]
+std_val: [0.09158824,0.09528065,0.20864842]#[23.35500145,24.29656621,53.20534792]
+
+#class_to_labels: {'daisy':0,'dandelion':1,'rose':2,'sunflower':3,'tulip':4}
 
 #paths
-root_path: 'D:\2020\Trainings\self-supervised-learning'
+root_path: 'D:\2020\Trainings\self_supervised_learning'
 data_path: 'dataset'
-save_dir: 'sl_exp_1'
+exp_type: 'self-supervised' # 'supervised' or 'self-supervised'
+save_dir: 'ssl_exp_1'
 imgs_dir: 'flowers'
 labels_dir: 'annotations'
+log: 'train.log'
 
 # Self Supervised Params
 pretext: 'rotation'
@@ -21,16 +33,15 @@ momentum: 9e-1
 
 # Training Parameters
 num_epochs: 1
-batch_size: 10
+batch_size: 2
 mean_norm: False
-mean_val: [0,0,0]
-std_val: [255,255,255]
 img_sz: 100
 cuda_num: 2
 use_cuda: False
+data_aug: False #['randomhorizontalflip','randomcrop']# None
 
 #saving parameters
-save_intermediate_weights: 10 # After how many epoch to save the weights
+save_intermediate_weights: 5 # After how many epoch to save the weights
 
 
 

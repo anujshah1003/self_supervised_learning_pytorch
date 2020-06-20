@@ -17,7 +17,7 @@ from itertools import islice
 class FlowersDataset(Dataset):
     """ Flowers Dataset Class loader """
     
-    def __init__(self,params, annotation_file,data_type='train', \
+    def __init__(self,cfg, annotation_file,data_type='train', \
                  transform=None):
         
         """
@@ -28,12 +28,12 @@ class FlowersDataset(Dataset):
             transforms: The trasforms to apply to images
         """
         
-        self.data_path = os.path.join(params.root_path,params.data_path,params.imgs_dir)
-        self.label_path = os.path.join(params.root_path,params.data_path,params.labels_dir,annotation_file)
+        self.data_path = os.path.join(cfg.root_path,cfg.data_path,cfg.imgs_dir)
+        self.label_path = os.path.join(cfg.root_path,cfg.data_path,cfg.labels_dir,annotation_file)
         self.transform=transform
-        self.pretext = params.pretext
+        self.pretext = cfg.pretext
         if self.pretext == 'rotation':
-            self.num_rot = params.num_rot
+            self.num_rot = cfg.num_rot
         self._load_data()
 
     def _load_data(self):
@@ -46,7 +46,7 @@ class FlowersDataset(Dataset):
         self.loaded_data = []
 #        self.read_data=[]
         for i in range(self.labels.shape[0]):
-            img_name = os.path.join(self.data_path, self.labels['FileName'][i])
+            img_name = os.path.join(self.data_path, self.labels['Category'][i],self.labels['FileName'][i])
             #data.append(io.imread(os.path.join(self.image_dir, self.labels['img_name'][i])))
             label = self.labels['Label'][i]
             img = Image.open(img_name)
@@ -112,17 +112,29 @@ def rotnet_collate_fn(batch):
     batch[1] = batch[1].view([batch_size * rotations])
     return batch
 #%%
+### ToTensor() normalizes the value between 0 and 1
 if __name__ == '__main__':
      
-    config_path = r'D:\2020\Trainings\self-supervised-learning\config\config.yaml'
+    config_path = r'D:\2020\Trainings\self_supervised_learning\config\config.yaml'
     cfg = utils.load_yaml(config_path,config_type='object')
-    if cfg.mean_norm == True:
-        transform = transforms.Compose([transforms.Resize((cfg.img_sz,cfg.img_sz)),
-                                        transforms.ToTensor(),
-                                        transforms.Normalize(mean=cfg.mean_val, std=cfg.std_val)])
-    else:
-        transform = transforms.Compose([transforms.Resize((cfg.img_sz,cfg.img_sz)),transforms.ToTensor()])
+    if cfg.data_aug:
+        data_aug = transforms.Compose([transforms.RandomHorizontalFlip(p=0.5),
+        transforms.RandomCrop(32, padding=4)])
     
+        if cfg.mean_norm == True:
+            transform = transforms.Compose([transforms.Resize((cfg.img_sz,cfg.img_sz)),data_aug,
+                                        transforms.ToTensor(),
+                                        transforms.Normalize(mean=cfg.mean_pix, std=cfg.std_pix)])
+        
+        transform = transforms.Compose([transforms.Resize((cfg.img_sz,cfg.img_sz)),data_aug,
+                                        transforms.ToTensor()])                 
+
+    elif cfg.mean_norm:
+        transform = transforms.Compose([transforms.Resize((cfg.img_sz,cfg.img_sz)),
+                                        transforms.ToTensor(),transforms.Normalize(mean=cfg.mean_pix, std=cfg.std_pix)])
+    else:
+        transform = transforms.Compose([transforms.Resize((cfg.img_sz,cfg.img_sz)),
+                                        transforms.ToTensor()])    
     if cfg.pretext=='rotation':
         collate_func=rotnet_collate_fn
     else:
