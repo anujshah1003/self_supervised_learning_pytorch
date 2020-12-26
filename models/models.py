@@ -11,3 +11,13 @@ def get_model(params,pretrained=False):
 
 def load_checkpoint(model,checkpoint_path,device):
     pass
+
+class LogisticRegression(nn.Module):
+    
+    def __init__(self, n_features, n_classes):
+        super(LogisticRegression, self).__init__()
+
+        self.model = nn.Linear(n_features, n_classes)
+
+    def forward(self, x):
+        return self.model(x)
