@@ -31,7 +31,9 @@ As we have discussed, self-supervision is abut defining a pretext task for which
 
 ## Implementing Rotation based Self-supervised Learning
 We will implement this paper - ![UNSUPERVISED REPRESENTATION LEARNING BY PREDICTING IMAGE ROTATIONS ](https://arxiv.org/abs/1803.07728)
+
 Offical Github - https://github.com/gidariss/FeatureLearningRotNet
+
 My video on the paper - https://www.youtube.com/watch?v=R-9V7MV9GPw&t=751s
 ## Steps to follow
 Step-1: Split the data intro train and test (check the eda notebook to see the data).
