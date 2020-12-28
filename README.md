@@ -29,3 +29,18 @@ As we have discussed, self-supervision is abut defining a pretext task for which
 #### Downstream Task (main task of predicting flower categories)
 ![alt text](https://github.com/anujshah1003/self_supervised_learning/blob/master/readme_imgs/main_task.png)
 
+## Steps to follow
+Step-1: Split the data intro train and test (check the eda notebook to see the data).
+
+Step-2: Take out 10% of the training data as a small labeled data to evaluate the efficiency of self-supervised learning.
+
+Step-3: train on this small labeled data and compute the results on test data
+
+Step-4: Do self-supervised learning on entire training data without using their labels
+
+Step-5: use the pretrained rotnet model and fine tune on the small labeled data
+
+Step-6: use the above finetuned model and evaluate the perfromance on test data.
+
+Step-7: Compare the test results from step-3 with step-6 to see the beenfots of unsupervised/self-supervised pretraining
+
