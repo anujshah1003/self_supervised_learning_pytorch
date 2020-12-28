@@ -38,6 +38,10 @@ torch.set_default_tensor_type(dtype)
 
 def train(epoch, model, device, dataloader, optimizer, scheduler, criterion, experiment_dir, writer):
     """ Train loop, predict rotations. """
+    
+    progbar = tqdm(total=len(dataloader), desc='Train')
+#    progbar = tqdm(total=10, desc='Train')
+
     loss_record = utils.RunningAverage()
     acc_record = utils.RunningAverage()
     correct=0
@@ -45,8 +49,8 @@ def train(epoch, model, device, dataloader, optimizer, scheduler, criterion, exp
     save_path = experiment_dir + '/'
     os.makedirs(save_path, exist_ok=True)
     model.train()
-    for batch_idx, (data,label,_,_) in enumerate(tqdm(islice(dataloader,10))):
-#    for batch_idx, (data, label, _,_) in enumerate(tqdm(dataloader)):
+#    for batch_idx, (data,label,_,_) in enumerate(tqdm(islice(dataloader,10))):
+    for batch_idx, (data, label, _,_) in enumerate(tqdm(dataloader)):
         data, label = data.to(device), label.to(device)
         optimizer.zero_grad()
         output = model(data)
@@ -72,15 +76,18 @@ def train(epoch, model, device, dataloader, optimizer, scheduler, criterion, exp
         loss.backward()
         optimizer.step()
         
+        progbar.set_description('Train (loss=%.4f)' % (loss_record()))
+        progbar.update(1)
+        
     if scheduler:  
         scheduler.step()
         
     LR=optimizer.param_groups[0]['lr']
-    
+
 
     writer.add_scalar('Loss_epoch/train', loss_record(), epoch)
     writer.add_scalar('Acc_epoch/train', acc_record(), epoch)
-    logging.info('Train Epoch: {} LR: {:.4f} Avg Loss: {:.4f}; Avg Acc: {:.4f}'.format(epoch+1,LR, loss_record(), acc_record()))
+    logging.info('Train Epoch: {} LR: {:.4f} Avg Loss: {:.4f}; Avg Acc: {:.4f}'.format(epoch,LR, loss_record(), acc_record()))
 
     return loss_record,acc_record
 
@@ -116,12 +123,12 @@ def train_and_evaluate(cfg):
         del state_dict['fc.weight']
         del state_dict['fc.bias']
     
-    model.load_state_dict(state_dict, strict=False)
+        model.load_state_dict(state_dict, strict=False)
     
-    # Only finetune fc layer
-    for name, param in model.named_parameters():
-        if 'fc' not in name:
-            param.requires_grad = False
+        # Only finetune fc layer
+        for name, param in model.named_parameters():
+            if 'fc' not in name:
+                param.requires_grad = False
     
     model = model.to(device)
 
@@ -138,7 +145,7 @@ def train_and_evaluate(cfg):
     criterion = nn.CrossEntropyLoss()
 
     best_loss = 1000
-    for epoch in range(cfg.num_epochs + 1):
+    for epoch in range(cfg.num_epochs):
         
 #        print('\nTrain for Epoch: {}/{}'.format(epoch,cfg.num_epochs))
         logging.info('\nTrain for Epoch: {}/{}'.format(epoch,cfg.num_epochs))
@@ -148,7 +155,7 @@ def train_and_evaluate(cfg):
 #        print('\nValidate for Epoch: {}/{}'.format(epoch,cfg.num_epochs))
         logging.info('\nValidate for Epoch: {}/{}'.format(epoch,cfg.num_epochs))
         val_loss,val_acc = validate(epoch, model, device, dloader_val, criterion, experiment_dir, writer)
-        logging.info('Val Epoch: {} Avg Loss: {:.4f} \t Avg Acc: {:.4f}'.format(epoch+1, val_loss, val_acc))
+        logging.info('Val Epoch: {} Avg Loss: {:.4f} \t Avg Acc: {:.4f}'.format(epoch, val_loss, val_acc))
 
         is_best = val_loss < best_loss
         best_loss = min(val_loss, best_loss)

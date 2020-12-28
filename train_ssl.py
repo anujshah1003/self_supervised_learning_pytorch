@@ -37,6 +37,7 @@ torch.set_default_tensor_type(dtype)
 #%%
 
 def train(epoch, model, device, dataloader, optimizer, scheduler, criterion, experiment_dir, writer):
+    
     """ Train loop, predict rotations. """
     loss_record = utils.RunningAverage()
     acc_record = utils.RunningAverage()
@@ -78,7 +79,7 @@ def train(epoch, model, device, dataloader, optimizer, scheduler, criterion, exp
 
     writer.add_scalar('Loss_epoch/train', loss_record(), epoch)
     writer.add_scalar('Acc_epoch/train', acc_record(), epoch)
-    logging.info('Train Epoch: {} LR: {:.5f} Avg Loss: {:.4f}; Avg Acc: {:.4f}'.format(epoch+1,LR, loss_record(), acc_record()))
+    logging.info('Train Epoch: {} LR: {:.5f} Avg Loss: {:.4f}; Avg Acc: {:.4f}'.format(epoch,LR, loss_record(), acc_record()))
 
     return loss_record,acc_record
 
@@ -128,7 +129,7 @@ def train_and_evaluate(cfg):
 #        print('\nValidate for Epoch: {}/{}'.format(epoch,cfg.num_epochs))
         logging.info('\nValidate for Epoch: {}/{}'.format(epoch,cfg.num_epochs))
         val_loss,val_acc = validate(epoch, model, device, dloader_val, criterion, experiment_dir, writer)
-        logging.info('Val Epoch: {} Avg Loss: {:.4f} \t Avg Acc: {:.4f}'.format(epoch+1, val_loss, val_acc))
+        logging.info('Val Epoch: {} Avg Loss: {:.4f} \t Avg Acc: {:.4f}'.format(epoch, val_loss, val_acc))
 
         is_best = val_loss < best_loss
         best_loss = min(val_loss, best_loss)

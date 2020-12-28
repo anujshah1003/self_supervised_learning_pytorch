@@ -19,6 +19,9 @@ torch.set_default_tensor_type(dtype)
 
 def validate(epoch, model, device, dataloader, criterion, args, writer):
     """ Test loop, print metrics """
+    progbar = tqdm(total=len(dataloader), desc='Val')
+
+    
     loss_record = utils.RunningAverage()
     acc_record = utils.RunningAverage()
     model.eval()
@@ -35,7 +38,8 @@ def validate(epoch, model, device, dataloader, criterion, args, writer):
             acc_record.update(100*acc[0].item()/data.size(0))
             loss_record.update(loss.item())
             #print('val Step: {}/{} Loss: {:.4f} \t Acc: {:.4f}'.format(batch_idx,len(dataloader), loss_record(), acc_record()))
-
+            progbar.set_description('Val (loss=%.4f)' % (loss_record()))
+            progbar.update(1)
 
     writer.add_scalar('Loss_epoch/validation', loss_record(), epoch)
     writer.add_scalar('Acc_epoch/validation', acc_record(), epoch)

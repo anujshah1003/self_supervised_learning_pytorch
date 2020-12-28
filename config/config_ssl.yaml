@@ -42,11 +42,13 @@ cuda_num: 2
 use_cuda: False
 data_aug: False #['randomhorizontalflip','randomcrop']# None
 
-# pretrained model
-
-
 #saving parameters
-save_intermediate_weights: 5 # After how many epoch to save the weights
+save_intermediate_weights: 1 # After how many epoch to save the weights
+
+# linear_eval
+model: 'logistic_reg'
+logistic_batch_size: 256
+logistic_epochs: 100
 
 
 
