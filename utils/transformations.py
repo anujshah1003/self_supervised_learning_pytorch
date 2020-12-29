@@ -24,21 +24,3 @@ def rotate_img(img, rot):
     else:
         raise ValueError('rotation should be 0, 90, 120, 180, 240 or 270 degrees')
 
-def visualize(input_arr,labels):
-    
-    fig = plt.figure(figsize=(12,12))
-    if len(input_arr.shape)==4:
-        num_imgs=input_arr.shape[0]
-    else:
-        num_imgs=1
-        input_arr=np.expand_dims(input_arr,axis=0)
-        labels=[labels]
-    for i in range(num_imgs):
-      plt.subplot(3,3,i+1)
-      plt.tight_layout()
-#      img = np.rollaxis(img,0,3)
-      img = input_arr[i]
-      plt.imshow(img[0,:,:], interpolation='none')
-      plt.title("class_label: {}".format(labels[i]))
-      plt.xticks([])
-      plt.yticks([])

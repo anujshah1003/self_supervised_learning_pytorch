@@ -4,7 +4,9 @@ Data loader for loading data for self-supervised learning for rotation task
 import os
 from PIL import Image
 import utils
-from utils.transformations import rotate_img,visualize
+from utils.transformations import rotate_img
+from utils.helpers import visualize
+
 import torch
 from torch.utils.data import Dataset
 from torch.utils.data.dataloader import default_collate
@@ -46,7 +48,8 @@ class FlowersDataset(Dataset):
         self.loaded_data = []
 #        self.read_data=[]
         for i in range(self.labels.shape[0]):
-            img_name = os.path.join(self.data_path, self.labels['Category'][i],self.labels['FileName'][i])
+            img_name = self.labels['FileName'][i]#os.path.join(self.data_path, self.labels['Category'][i],self.labels['FileName'][i])
+            #print(img_name)
             #data.append(io.imread(os.path.join(self.image_dir, self.labels['img_name'][i])))
             label = self.labels['Label'][i]
             img = Image.open(img_name)
@@ -115,7 +118,7 @@ def rotnet_collate_fn(batch):
 ### ToTensor() normalizes the value between 0 and 1
 if __name__ == '__main__':
      
-    config_path = r'D:\2020\Trainings\self_supervised_learning\config\config.yaml'
+    config_path = r'D:\2020\Trainings\self_supervised_learning\config\config_sl.yaml'
     cfg = utils.load_yaml(config_path,config_type='object')
     if cfg.data_aug:
         data_aug = transforms.Compose([transforms.RandomHorizontalFlip(p=0.5),
@@ -140,20 +143,26 @@ if __name__ == '__main__':
     else:
         collate_func=default_collate
 
-    annotation_file = 'flowers_recognition_train.csv'                                 
+    annotation_file = 'small_labeled_data.csv'                                 
     
     dataset = FlowersDataset(cfg,annotation_file,\
-                            data_type='test',transform=transform)
+                            data_type='train',transform=transform)
     
     len(dataset)
-    img,label,idx,img_name = dataset[1]
+    img,label,idx,img_name = dataset[3]
     
-    visualize(img,label)
+    if type(img)==torch.Tensor:
+        visualize(img.numpy(),label.numpy())
+    else:
+        visualize(img,label)
     
-    data_val = DataLoader(dataset,batch_size=10,collate_fn=collate_func,shuffle=False)
+    data_val = DataLoader(dataset,batch_size=10,collate_fn=collate_func,shuffle=True)
     
     data, label,idx,img_names = next(iter(data_val))
     print(data.shape, label)
         
     for data,label,idx,img_names in islice(data_val,4):
         print(data.shape, label)
+    
+    visualize(data.numpy(),label.numpy())   
+    

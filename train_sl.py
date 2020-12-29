@@ -38,9 +38,9 @@ torch.set_default_tensor_type(dtype)
 
 def train(epoch, model, device, dataloader, optimizer, scheduler, criterion, experiment_dir, writer):
     """ Train loop, predict rotations. """
-    
-    progbar = tqdm(total=len(dataloader), desc='Train')
-#    progbar = tqdm(total=10, desc='Train')
+    global iter_cnt
+#    progbar = tqdm(total=len(dataloader), desc='Train')
+    progbar = tqdm(total=10, desc='Train')
 
     loss_record = utils.RunningAverage()
     acc_record = utils.RunningAverage()
@@ -49,8 +49,8 @@ def train(epoch, model, device, dataloader, optimizer, scheduler, criterion, exp
     save_path = experiment_dir + '/'
     os.makedirs(save_path, exist_ok=True)
     model.train()
-#    for batch_idx, (data,label,_,_) in enumerate(tqdm(islice(dataloader,10))):
-    for batch_idx, (data, label, _,_) in enumerate(tqdm(dataloader)):
+    for batch_idx, (data,label,_,_) in enumerate(tqdm(islice(dataloader,10))):
+#    for batch_idx, (data, label, _,_) in enumerate(tqdm(dataloader)):
         data, label = data.to(device), label.to(device)
         optimizer.zero_grad()
         output = model(data)
@@ -66,8 +66,9 @@ def train(epoch, model, device, dataloader, optimizer, scheduler, criterion, exp
         acc_record.update(100*acc)
         loss_record.update(loss.item())
 
-        writer.add_scalar('Loss/train', loss.item(), epoch + batch_idx)
-        writer.add_scalar('Acc/train', loss.item(), epoch + batch_idx)
+        writer.add_scalar('train/Loss_batch', loss.item(), iter_cnt)
+        writer.add_scalar('train/Acc_batch', acc, iter_cnt)
+        iter_cnt+=1
 
 #        logging.info('Train Step: {}/{} Loss: {:.4f}; Acc: {:.4f}'.format(batch_idx,len(dataloader), loss_record(), acc_record()))
 
@@ -85,8 +86,8 @@ def train(epoch, model, device, dataloader, optimizer, scheduler, criterion, exp
     LR=optimizer.param_groups[0]['lr']
 
 
-    writer.add_scalar('Loss_epoch/train', loss_record(), epoch)
-    writer.add_scalar('Acc_epoch/train', acc_record(), epoch)
+    writer.add_scalar('train/Loss_epoch', loss_record(), epoch)
+    writer.add_scalar('train/Acc_epoch', acc_record(), epoch)
     logging.info('Train Epoch: {} LR: {:.4f} Avg Loss: {:.4f}; Avg Acc: {:.4f}'.format(epoch,LR, loss_record(), acc_record()))
 
     return loss_record,acc_record
@@ -108,12 +109,12 @@ def train_and_evaluate(cfg):
     writer = SummaryWriter(experiment_dir + '/tboard' )
 
     ## get the dataloaders
-    dloader_train,dloader_val,dloader_test = dataloaders.get_dataloaders(cfg,val_split=.2)
+    dloader_train,dloader_val,dloader_test = dataloaders.get_dataloaders(cfg)
     
     # Load the model
     model = models.get_model(cfg)
     
-    if cfg.ssl_pretrained_exp_path:
+    if cfg.use_pretrained:
         ssl_exp_dir = experiment_dir = os.path.join('experiments',\
                                         'self-supervised',cfg.ssl_pretrained_exp_path)
         state_dict = torch.load(os.path.join(ssl_exp_dir,cfg.ssl_weight),\
@@ -143,7 +144,9 @@ def train_and_evaluate(cfg):
     else:
         scheduler=None
     criterion = nn.CrossEntropyLoss()
-
+    
+    global iter_cnt
+    iter_cnt=0
     best_loss = 1000
     for epoch in range(cfg.num_epochs):
         
@@ -156,7 +159,11 @@ def train_and_evaluate(cfg):
         logging.info('\nValidate for Epoch: {}/{}'.format(epoch,cfg.num_epochs))
         val_loss,val_acc = validate(epoch, model, device, dloader_val, criterion, experiment_dir, writer)
         logging.info('Val Epoch: {} Avg Loss: {:.4f} \t Avg Acc: {:.4f}'.format(epoch, val_loss, val_acc))
-
+        
+        for name, weight in model.named_parameters():
+            writer.add_histogram(name,weight, epoch)
+            writer.add_histogram(f'{name}.grad',weight.grad, epoch)
+            
         is_best = val_loss < best_loss
         best_loss = min(val_loss, best_loss)
         if epoch % cfg.save_intermediate_weights==0:
@@ -176,7 +183,7 @@ def train_and_evaluate(cfg):
     # save the configuration file within that experiment directory
     utils.save_yaml(cfg,save_path=os.path.join(experiment_dir,'config_sl.yaml'))
     logging.info('-----------End of Experiment------------')
-  
+#%%
 if __name__=='__main__':
     config_file='config/config_sl.yaml'
     cfg = utils.load_yaml(config_file,config_type='object')

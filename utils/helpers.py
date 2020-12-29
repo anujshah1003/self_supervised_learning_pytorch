@@ -3,6 +3,8 @@ import os
 import torch
 import shutil
 import logging
+import matplotlib.pyplot as plt
+import numpy as np
 
 class dotdict(dict):
     """dot.notation access to dictionary attributes
@@ -82,3 +84,25 @@ def set_logger(log_path):
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(logging.Formatter('%(message)s'))
         logger.addHandler(stream_handler)
+        
+def visualize(input_arr,labels):
+    
+    fig = plt.figure(figsize=(12,12))
+    if len(input_arr.shape)==4:
+        num_imgs=input_arr.shape[0]
+    else:
+        num_imgs=1
+        input_arr=np.expand_dims(input_arr,axis=0)
+        labels=[labels]
+    rows=np.sqrt(num_imgs)
+    rows=int(np.ceil(rows))
+    for i in range(num_imgs):
+      plt.subplot(rows,rows,i+1)
+      plt.tight_layout()
+#      img = np.rollaxis(img,0,3)
+      img = input_arr[i]
+      img = np.rollaxis(img,0,3)
+      plt.imshow(img, interpolation='none')
+      plt.title("class_label: {}".format(labels[i]))
+      plt.xticks([])
+      plt.yticks([])

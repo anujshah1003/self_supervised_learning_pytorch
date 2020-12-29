@@ -41,8 +41,8 @@ def validate(epoch, model, device, dataloader, criterion, args, writer):
             progbar.set_description('Val (loss=%.4f)' % (loss_record()))
             progbar.update(1)
 
-    writer.add_scalar('Loss_epoch/validation', loss_record(), epoch)
-    writer.add_scalar('Acc_epoch/validation', acc_record(), epoch)
+    writer.add_scalar('validation/Loss_epoch', loss_record(), epoch)
+    writer.add_scalar('validation/Acc_epoch', acc_record(), epoch)
     
     return loss_record(),acc_record()
 
