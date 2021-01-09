@@ -34,23 +34,26 @@ def get_datasets(cfg):
 def loaders(cfg,get_dataset=False):
     
     if cfg.data_aug:
-        data_aug = transforms.Compose([transforms.RandomHorizontalFlip(p=0.5),
-        transforms.RandomCrop(32, padding=4)])
+        data_aug = transforms.Compose([transforms.RandomHorizontalFlip(p=0.5), transforms.RandomResizedCrop(128)])
+
+        #data_aug = transforms.Compose([transforms.RandomHorizontalFlip(p=0.5),
+        #transforms.RandomCrop(32, padding=4)])
     
         if cfg.mean_norm == True:
-            transform = transforms.Compose([transforms.Resize((cfg.img_sz,cfg.img_sz)),data_aug,
-                                        transforms.ToTensor(),
-                                        transforms.Normalize(mean=cfg.mean_pix, std=cfg.std_pix)])
-        
-        transform = transforms.Compose([transforms.Resize((cfg.img_sz,cfg.img_sz)),data_aug,
-                                        transforms.ToTensor()])                 
-
+#            transform = transforms.Compose([transforms.Resize((cfg.img_sz,cfg.img_sz)),data_aug,
+#                                        transforms.ToTensor(),
+#                                        transforms.Normalize(mean=cfg.mean_pix, std=cfg.std_pix)])
+            transform = transforms.Compose([data_aug,transforms.ToTensor(),
+                                        transforms.Normalize(mean=cfg.mean_pix, std=cfg.std_pix)])       
+#        transform = transforms.Compose([transforms.Resize((cfg.img_sz,cfg.img_sz)),data_aug,
+#                                        transforms.ToTensor()])                 
+        transform = transforms.Compose([data_aug,transforms.ToTensor()])   
     elif cfg.mean_norm:
         transform = transforms.Compose([transforms.Resize((cfg.img_sz,cfg.img_sz)),
                                         transforms.ToTensor(),transforms.Normalize(mean=cfg.mean_pix, std=cfg.std_pix)])
     else:
         transform = transforms.Compose([transforms.Resize((cfg.img_sz,cfg.img_sz)),
-                                        transforms.ToTensor()]) 
+                                        transforms.ToTensor()])   
     
     if cfg.pretext=='rotation':
         collate_func=rotnet_collate_fn
@@ -98,7 +101,7 @@ def loaders(cfg,get_dataset=False):
                             collate_fn=collate_func,shuffle=True)
         if val_dataset:
             # if you have separate val data define val loader here
-            dataloader_train = DataLoader(train_dataset,batch_size=cfg.batch_size,\
+            dataloader_val = DataLoader(val_dataset,batch_size=cfg.batch_size,\
                                 collate_fn=collate_func,shuffle=True)
         else:
             dataloader_val=None

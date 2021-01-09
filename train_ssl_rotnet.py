@@ -39,6 +39,9 @@ torch.set_default_tensor_type(dtype)
 def train(epoch, model, device, dataloader, optimizer, scheduler, criterion, experiment_dir, writer):
     
     """ Train loop, predict rotations. """
+    global iter_cnt
+    progbar = tqdm(total=len(dataloader), desc='Train')
+ #   progbar = tqdm(total=10, desc='Train')
     loss_record = utils.RunningAverage()
     acc_record = utils.RunningAverage()
     correct=0
@@ -46,8 +49,8 @@ def train(epoch, model, device, dataloader, optimizer, scheduler, criterion, exp
     save_path = experiment_dir + '/'
     os.makedirs(save_path, exist_ok=True)
     model.train()
-    for batch_idx, (data,label,_,_) in enumerate(tqdm(islice(dataloader,10))):
-#    for batch_idx, (data, label, _,_) in enumerate(tqdm(dataloader)):
+ #   for batch_idx, (data,label,_,_) in enumerate(tqdm(islice(dataloader,10))):
+    for batch_idx, (data, label, _,_) in enumerate(tqdm(dataloader)):
         data, label = data.to(device), label.to(device)
         optimizer.zero_grad()
         output = model(data)
@@ -63,8 +66,9 @@ def train(epoch, model, device, dataloader, optimizer, scheduler, criterion, exp
         acc_record.update(100*acc)
         loss_record.update(loss.item())
 
-        writer.add_scalar('Loss/train', loss.item(), epoch + batch_idx)
-        writer.add_scalar('Acc/train', loss.item(), epoch + batch_idx)
+        writer.add_scalar('train/Loss_batch', loss.item(), iter_cnt)
+        writer.add_scalar('train/Acc_batch', acc, iter_cnt)
+        iter_cnt+=1
 
 #        logging.info('Train Step: {}/{} Loss: {:.4f}; Acc: {:.4f}'.format(batch_idx,len(dataloader), loss_record(), acc_record()))
 
@@ -72,13 +76,15 @@ def train(epoch, model, device, dataloader, optimizer, scheduler, criterion, exp
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+        progbar.set_description('Train (loss=%.4f)' % (loss_record()))
+        progbar.update(1)
         
     if scheduler:  
         scheduler.step()
     LR=optimizer.param_groups[0]['lr']
 
-    writer.add_scalar('Loss_epoch/train', loss_record(), epoch)
-    writer.add_scalar('Acc_epoch/train', acc_record(), epoch)
+    writer.add_scalar('train/Loss_epoch', loss_record(), epoch)
+    writer.add_scalar('train/Acc_epoch', acc_record(), epoch)
     logging.info('Train Epoch: {} LR: {:.5f} Avg Loss: {:.4f}; Avg Acc: {:.4f}'.format(epoch,LR, loss_record(), acc_record()))
 
     return loss_record,acc_record
@@ -111,15 +117,19 @@ def train_and_evaluate(cfg):
     writer.add_graph(model, images)
 
     # follow the same setting as RotNet paper
-    optimizer = optim.SGD(model.parameters(), lr=float(cfg.lr), momentum=float(cfg.momentum), weight_decay=5e-4, nesterov=True)
+    #optimizer = optim.SGD(model.parameters(), lr=float(cfg.lr), momentum=float(cfg.momentum), weight_decay=5e-4, nesterov=True)
+    optimizer = optim.Adam(model.parameters(), lr=float(cfg.lr))#, momentum=float(cfg.momentum), weight_decay=5e-4, nesterov=True)
+
     if cfg.scheduler:
         scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[60, 120, 160, 200], gamma=0.2)
     else:
         scheduler=None
     criterion = nn.CrossEntropyLoss()
-
+    
+    global iter_cnt
+    iter_cnt=0
     best_loss = 1000
-    for epoch in range(cfg.num_epochs + 1):
+    for epoch in range(cfg.num_epochs):
         
 #        print('\nTrain for Epoch: {}/{}'.format(epoch,cfg.num_epochs))
         logging.info('\nTrain for Epoch: {}/{}'.format(epoch,cfg.num_epochs))
@@ -136,14 +146,18 @@ def train_and_evaluate(cfg):
         if epoch % cfg.save_intermediate_weights==0:
             utils.save_checkpoint({'Epoch': epoch,'state_dict': model.state_dict(),
                                    'optim_dict' : optimizer.state_dict()}, 
-                                    is_best, experiment_dir, checkpoint='{}_{}rot_epoch{}_checkpoint.pth'.format( cfg.network.lower(), str(cfg.num_rot),str(epoch)),\
+                                    is_best, experiment_dir, checkpoint='{}_epoch{}_checkpoint.pth'.format( cfg.network.lower(),str(epoch)),\
                                     
-                                    best_model='{}_{}rot_epoch{}_best.pth'.format(cfg.network.lower(), str(cfg.num_rot),str(epoch))
+                                    best_model='{}_best.pth'.format(cfg.network.lower())
                                     )
     writer.close()
     
 #    print('\nEvaluate on test')
-    logging.info('\nEvaluate on test')
+    logging.info('\nEvaluate test data with best ckpt')
+    state_dict = torch.load(os.path.join(experiment_dir,'{}_best.pth'.format(cfg.network.lower())),\
+                                map_location=device)
+    model.load_state_dict(state_dict, strict=False)
+
     test_loss,test_acc = test(model, device, dloader_test, criterion, experiment_dir)
     logging.info('Test: Avg Loss: {:.4f} \t Avg Acc: {:.4f}'.format(test_loss, test_acc))
 

@@ -121,17 +121,20 @@ if __name__ == '__main__':
     config_path = r'D:\2020\Trainings\self_supervised_learning\config\config_sl.yaml'
     cfg = utils.load_yaml(config_path,config_type='object')
     if cfg.data_aug:
-        data_aug = transforms.Compose([transforms.RandomHorizontalFlip(p=0.5),
-        transforms.RandomCrop(32, padding=4)])
+        data_aug = transforms.Compose([transforms.RandomHorizontalFlip(p=0.5), transforms.RandomResizedCrop(128)])
+
+        #data_aug = transforms.Compose([transforms.RandomHorizontalFlip(p=0.5),
+        #transforms.RandomCrop(32, padding=4)])
     
         if cfg.mean_norm == True:
-            transform = transforms.Compose([transforms.Resize((cfg.img_sz,cfg.img_sz)),data_aug,
-                                        transforms.ToTensor(),
-                                        transforms.Normalize(mean=cfg.mean_pix, std=cfg.std_pix)])
-        
-        transform = transforms.Compose([transforms.Resize((cfg.img_sz,cfg.img_sz)),data_aug,
-                                        transforms.ToTensor()])                 
-
+#            transform = transforms.Compose([transforms.Resize((cfg.img_sz,cfg.img_sz)),data_aug,
+#                                        transforms.ToTensor(),
+#                                        transforms.Normalize(mean=cfg.mean_pix, std=cfg.std_pix)])
+            transform = transforms.Compose([data_aug,transforms.ToTensor(),
+                                        transforms.Normalize(mean=cfg.mean_pix, std=cfg.std_pix)])       
+#        transform = transforms.Compose([transforms.Resize((cfg.img_sz,cfg.img_sz)),data_aug,
+#                                        transforms.ToTensor()])                 
+        transform = transforms.Compose([data_aug,transforms.ToTensor()])   
     elif cfg.mean_norm:
         transform = transforms.Compose([transforms.Resize((cfg.img_sz,cfg.img_sz)),
                                         transforms.ToTensor(),transforms.Normalize(mean=cfg.mean_pix, std=cfg.std_pix)])
@@ -152,7 +155,7 @@ if __name__ == '__main__':
     img,label,idx,img_name = dataset[3]
     
     if type(img)==torch.Tensor:
-        visualize(img.numpy(),label.numpy())
+        visualize(img.numpy(),label)
     else:
         visualize(img,label)
     

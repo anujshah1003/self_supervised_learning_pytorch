@@ -27,9 +27,9 @@ pretext: False
 num_rot: 4
 
 #supervised params
-use_pretrained: False
+use_pretrained: True
 ssl_pretrained_exp_path: 'ssl_exp_1'
-ssl_weight: 'resnet18_4rot_epoch0_best.pth'
+ssl_weight: 'resnet18_4rot_epoch5_checkpoint.pth'
 
 #model parameters
 network: 'resnet18'

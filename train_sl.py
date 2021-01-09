@@ -52,10 +52,10 @@ def train(epoch, model, device, dataloader, optimizer, scheduler, criterion, exp
     for batch_idx, (data,label,_,_) in enumerate(tqdm(islice(dataloader,10))):
 #    for batch_idx, (data, label, _,_) in enumerate(tqdm(dataloader)):
         data, label = data.to(device), label.to(device)
-        optimizer.zero_grad()
+        #optimizer.zero_grad()
         output = model(data)
         loss = criterion(output, label)
-
+        print('loss',loss)
         # measure accuracy and record loss
         confidence, predicted = output.max(1)
         correct += predicted.eq(label).sum().item()
@@ -114,8 +114,15 @@ def train_and_evaluate(cfg):
     # Load the model
     model = models.get_model(cfg)
     
+    for name, param in model.named_parameters():
+        param.requires_grad = False
+        print(name)
+        
+    model.avgpool=nn.AdaptiveAvgPool2d(output_size=(1, 1))
+    model.fc=nn.Linear(in_features=512, out_features=5, bias=True)
+    
     if cfg.use_pretrained:
-        ssl_exp_dir = experiment_dir = os.path.join('experiments',\
+        ssl_exp_dir = os.path.join('experiments',\
                                         'self-supervised',cfg.ssl_pretrained_exp_path)
         state_dict = torch.load(os.path.join(ssl_exp_dir,cfg.ssl_weight),\
                                 map_location=device)
@@ -127,9 +134,18 @@ def train_and_evaluate(cfg):
         model.load_state_dict(state_dict, strict=False)
     
         # Only finetune fc layer
+        #layers_list=['fc','avgpool','layer3.0.conv']#,'layer3.1.conv','layer4.0.conv','layer4.1.conv']
+        #params_update=[]
         for name, param in model.named_parameters():
-            if 'fc' not in name:
-                param.requires_grad = False
+            #for l in layers_list:
+                if 'fc' in name or 'layer4.0.conv' in name or 'layer4.1.conv' in name:
+                    param.requires_grad = True
+###                    print(name)
+                else:
+                    param.requires_grad = False
+#                    print(name)
+                   # params_update.append(param)
+#            print(param.requires_grad)
     
     model = model.to(device)
 
@@ -138,6 +154,7 @@ def train_and_evaluate(cfg):
     writer.add_graph(model, images)
 
     # follow the same setting as RotNet paper
+    #model.parameters()
     optimizer = optim.SGD(model.parameters(), lr=float(cfg.lr), momentum=float(cfg.momentum), weight_decay=5e-4, nesterov=True)
     if cfg.scheduler:
         scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[60, 120, 160, 200], gamma=0.2)
@@ -169,14 +186,18 @@ def train_and_evaluate(cfg):
         if epoch % cfg.save_intermediate_weights==0:
             utils.save_checkpoint({'Epoch': epoch,'state_dict': model.state_dict(),
                                    'optim_dict' : optimizer.state_dict()}, 
-                                    is_best, experiment_dir, checkpoint='{}_{}rot_epoch{}_checkpoint.pth'.format( cfg.network.lower(), str(cfg.num_rot),str(epoch)),\
+                                    is_best, experiment_dir, checkpoint='{}_epoch{}_checkpoint.pth'.format( cfg.network.lower(),str(epoch)),\
                                     
-                                    best_model='{}_{}rot_epoch{}_best.pth'.format(cfg.network.lower(), str(cfg.num_rot),str(epoch))
+                                    best_model='{}_best.pth'.format(cfg.network.lower())
                                     )
     writer.close()
     
 #    print('\nEvaluate on test')
-    logging.info('\nEvaluate on test')
+    logging.info('\nEvaluate test result on best ckpt')
+    state_dict = torch.load(os.path.join(experiment_dir,'{}_best.pth'.format(cfg.network.lower())),\
+                                map_location=device)
+    model.load_state_dict(state_dict, strict=False)
+
     test_loss,test_acc = test(model, device, dloader_test, criterion, experiment_dir)
     logging.info('Test: Avg Loss: {:.4f} \t Avg Acc: {:.4f}'.format(test_loss, test_acc))
 

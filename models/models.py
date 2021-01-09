@@ -6,7 +6,7 @@ def get_model(params,pretrained=False):
         model = models.resnet18(pretrained=pretrained)
         if params.pretext=='rotation':
             params.num_classes=params.num_rot
-        model.fc = nn.Linear(in_features=512,out_features=params.num_classes,bias=True)
+        model.fc = nn.Linear(in_features=model.fc.in_features,out_features=params.num_classes,bias=True)
         return model
 
 def load_checkpoint(model,checkpoint_path,device):
