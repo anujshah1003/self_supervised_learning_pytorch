@@ -71,6 +71,7 @@ def loaders(cfg,get_dataset=False):
     
     test_dataset = FlowersDataset(cfg,annotation_file,\
                                   data_type='test',transform=transform)
+    #val_dataset=test_dataset	
     # if you want to use a portion of training dataset as validation data
     if cfg.val_split:
         

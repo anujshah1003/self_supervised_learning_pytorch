@@ -14,10 +14,11 @@ std_val: [0.09158824,0.09528065,0.20864842]#[23.35500145,24.29656621,53.20534792
 #class_to_labels: {'daisy':0,'dandelion':1,'rose':2,'sunflower':3,'tulip':4}
 
 #paths
-root_path: 'D:\2020\Trainings\self_supervised_learning'
+#root_path: 'D:\2020\Trainings\self_supervised_learning'
+root_path: '/media/second_drive/uid38717/self_supervised_learning_pytorch/'
 data_path: 'dataset'
 exp_type: 'self-supervised' # 'supervised' or 'self-supervised'
-save_dir: 'ssl_exp_1'
+save_dir: 'ssl_exp_5_rotnet_do_org_img_sz'
 imgs_dir: 'flowers'
 labels_dir: 'annotations'
 log: 'train.log'
@@ -29,17 +30,19 @@ num_rot: 4
 
 #model parameters
 network: 'resnet18'
-lr: 1e-2
+lr: 1e-3
 momentum: 9e-1
-scheduler: True
+scheduler: False
+opt: 'sgd'
+val_split: 0.18
 
 # Training Parameters
-num_epochs: 8
-batch_size: 2
+num_epochs: 30
+batch_size: 8
 mean_norm: False
-img_sz: 100
+img_sz: 128
 cuda_num: 2
-use_cuda: False
+use_cuda: True
 data_aug: False #['randomhorizontalflip','randomcrop']# None
 
 #saving parameters

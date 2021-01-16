@@ -55,7 +55,7 @@ def train(epoch, model, device, dataloader, optimizer, scheduler, criterion, exp
         #optimizer.zero_grad()
         output = model(data)
         loss = criterion(output, label)
-        print('loss',loss)
+        
         # measure accuracy and record loss
         confidence, predicted = output.max(1)
         correct += predicted.eq(label).sum().item()
@@ -106,7 +106,9 @@ def train_and_evaluate(cfg):
     cfg.use_cuda=use_cuda
     device = torch.device("cuda:{}".format(cfg.cuda_num) if use_cuda else "cpu")
     # initialize the tensorbiard summary writer
-    writer = SummaryWriter(experiment_dir + '/tboard' )
+    #writer = SummaryWriter(experiment_dir + '/tboard' )
+    logs=os.path.join('experiments',cfg.exp_type,'tboard_sup')
+    writer = SummaryWriter(logs + '/rotnet_pretrain_4' )
 
     ## get the dataloaders
     dloader_train,dloader_val,dloader_test = dataloaders.get_dataloaders(cfg)
@@ -114,22 +116,44 @@ def train_and_evaluate(cfg):
     # Load the model
     model = models.get_model(cfg)
     
-    for name, param in model.named_parameters():
-        param.requires_grad = False
-        print(name)
+#    for name, param in model.named_parameters():
+ #       param.requires_grad = False
+  #      print(name)
         
-    model.avgpool=nn.AdaptiveAvgPool2d(output_size=(1, 1))
-    model.fc=nn.Linear(in_features=512, out_features=5, bias=True)
-    
+   # model.avgpool=nn.AdaptiveAvgPool2d(output_size=(1, 1))
+    #model.fc=nn.Linear(in_features=512, out_features=5, bias=True)
     if cfg.use_pretrained:
+        pretrained_path =  os.path.join('experiments','supervised',cfg.pretrained_dir,cfg.pretrained_weights)
+        state_dict = torch.load(pretrained_path,map_location=device)
+        model.load_state_dict(state_dict, strict=False)
+        logging.info('loading pretrained_weights {}'.format(cfg.pretrained_weights))
+
+    if cfg.use_ssl:
         ssl_exp_dir = os.path.join('experiments',\
                                         'self-supervised',cfg.ssl_pretrained_exp_path)
         state_dict = torch.load(os.path.join(ssl_exp_dir,cfg.ssl_weight),\
                                 map_location=device)
         # the stored dict has 3 informations - epoch,state_dict and optimizer
         state_dict=state_dict['state_dict']
+        print(state_dict.keys())
         del state_dict['fc.weight']
         del state_dict['fc.bias']
+
+        del state_dict['layer4.0.conv1.weight']
+        del state_dict['layer4.0.conv2.weight']
+        del state_dict['layer4.1.conv1.weight']
+        del state_dict['layer4.1.conv2.weight']
+
+        del state_dict['layer3.0.conv1.weight']
+        del state_dict['layer3.0.conv2.weight']
+        del state_dict['layer3.1.conv1.weight']
+        del state_dict['layer3.1.conv2.weight']
+
+
+        #del state_dict['layer2.0.conv1.weight']
+        #del state_dict['layer2.0.conv2.weight']
+        #del state_dict['layer2.1.conv1.weight']
+        #del state_dict['layer2.1.conv2.weight']
     
         model.load_state_dict(state_dict, strict=False)
     
@@ -138,7 +162,7 @@ def train_and_evaluate(cfg):
         #params_update=[]
         for name, param in model.named_parameters():
             #for l in layers_list:
-                if 'fc' in name or 'layer4.0.conv' in name or 'layer4.1.conv' in name:
+                if 'fc' or 'layer3.0.conv' or 'layer3.1.conv' or'layer4.0.conv' or 'layer4.1.conv' in name:
                     param.requires_grad = True
 ###                    print(name)
                 else:
@@ -155,7 +179,9 @@ def train_and_evaluate(cfg):
 
     # follow the same setting as RotNet paper
     #model.parameters()
-    optimizer = optim.SGD(model.parameters(), lr=float(cfg.lr), momentum=float(cfg.momentum), weight_decay=5e-4, nesterov=True)
+    #optimizer = optim.SGD(model.parameters(), lr=float(cfg.lr), momentum=float(cfg.momentum), weight_decay=5e-4, nesterov=True)
+    optimizer = optim.Adam(model.parameters(), lr=float(cfg.lr))#, momentum=float(cfg.momentum), weight_decay=5e-4, nesterov=True)
+
     if cfg.scheduler:
         scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[60, 120, 160, 200], gamma=0.2)
     else:
@@ -177,9 +203,9 @@ def train_and_evaluate(cfg):
         val_loss,val_acc = validate(epoch, model, device, dloader_val, criterion, experiment_dir, writer)
         logging.info('Val Epoch: {} Avg Loss: {:.4f} \t Avg Acc: {:.4f}'.format(epoch, val_loss, val_acc))
         
-        for name, weight in model.named_parameters():
-            writer.add_histogram(name,weight, epoch)
-            writer.add_histogram(f'{name}.grad',weight.grad, epoch)
+       # for name, weight in model.named_parameters():
+        #    writer.add_histogram(name,weight, epoch)
+         #   writer.add_histogram(f'{name}.grad',weight.grad, epoch)
             
         is_best = val_loss < best_loss
         best_loss = min(val_loss, best_loss)

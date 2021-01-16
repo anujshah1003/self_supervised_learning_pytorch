@@ -26,8 +26,8 @@ def validate(epoch, model, device, dataloader, criterion, args, writer):
     acc_record = utils.RunningAverage()
     model.eval()
     with torch.no_grad():
-        for batch_idx, (data,label,_,_) in enumerate(tqdm(islice(dataloader,10))):
-    #    for batch_idx, (data, label,_,_) in enumerate(tqdm(dataloader)):
+    #    for batch_idx, (data,label,_,_) in enumerate(tqdm(islice(dataloader,10))):
+        for batch_idx, (data, label,_,_) in enumerate(tqdm(dataloader)):
             data, label = data.to(device), label.to(device)
             output = model(data)
             loss = criterion(output, label)
