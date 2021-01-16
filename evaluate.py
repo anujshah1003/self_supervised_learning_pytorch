@@ -52,8 +52,8 @@ def test( model, device, dataloader, criterion, args):
     acc_record = utils.RunningAverage()
     model.eval()
     with torch.no_grad():
-        for batch_idx, (data,label,_,_) in enumerate(tqdm(islice(dataloader,10))):
-    #    for batch_idx, (data, label,_,_) in enumerate(tqdm(dataloader)):
+     #   for batch_idx, (data,label,_,_) in enumerate(tqdm(islice(dataloader,10))):
+        for batch_idx, (data, label,_,_) in enumerate(tqdm(dataloader)):
             data, label = data.to(device), label.to(device)
             output = model(data)
             loss = criterion(output, label)
@@ -66,11 +66,13 @@ def test( model, device, dataloader, criterion, args):
 #            print('Test Step: {}/{} Loss: {:.4f} \t Acc: {:.4f}'.format(batch_idx,len(dataloader), loss_record(), acc_record()))
 
     return loss_record(),acc_record()
-
+#%%
 if __name__=='__main__':
     
-    experiment_dir = r'D:\2020\Trainings\self_supervised_learning\experiments\sl_exp_1'
-    config_file=os.path.join(experiment_dir,'config.yaml')
+    experiment_dir = r'D:\2020\Trainings\self_supervised_learning\experiments\supervised\sl_rotnet_pretrain_finetune_4'
+    config_file=os.path.join(experiment_dir,'config_sl.yaml')
+    ckpt_name='resnet18_best.pth'
+    ckpt_path=os.path.join(experiment_dir,ckpt_name)
     
     assert os.path.isfile(config_file), "No parameters config file found at {}".format(config_file)
 
@@ -87,6 +89,8 @@ if __name__=='__main__':
     
     # Load the model
     model = models.get_model(cfg)
+    state_dict = torch.load(ckpt_path,map_location=device)
+    model.load_state_dict(state_dict['state_dict'], strict=False)
     model = model.to(device)
     criterion = nn.CrossEntropyLoss()
     

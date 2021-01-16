@@ -140,7 +140,10 @@ if __name__ == '__main__':
                                         transforms.ToTensor(),transforms.Normalize(mean=cfg.mean_pix, std=cfg.std_pix)])
     else:
         transform = transforms.Compose([transforms.Resize((cfg.img_sz,cfg.img_sz)),
-                                        transforms.ToTensor()])    
+                                        transforms.ToTensor()])   
+    
+    transform_test = transforms.Compose([transforms.Resize((cfg.img_sz,cfg.img_sz)),
+                                        transforms.ToTensor()]) 
     if cfg.pretext=='rotation':
         collate_func=rotnet_collate_fn
     else:

@@ -209,7 +209,7 @@ def train_and_evaluate(cfg):
             
         is_best = val_loss < best_loss
         best_loss = min(val_loss, best_loss)
-        if epoch % cfg.save_intermediate_weights==0:
+        if epoch % cfg.save_intermediate_weights==0 or is_best:
             utils.save_checkpoint({'Epoch': epoch,'state_dict': model.state_dict(),
                                    'optim_dict' : optimizer.state_dict()}, 
                                     is_best, experiment_dir, checkpoint='{}_epoch{}_checkpoint.pth'.format( cfg.network.lower(),str(epoch)),\
@@ -222,7 +222,7 @@ def train_and_evaluate(cfg):
     logging.info('\nEvaluate test result on best ckpt')
     state_dict = torch.load(os.path.join(experiment_dir,'{}_best.pth'.format(cfg.network.lower())),\
                                 map_location=device)
-    model.load_state_dict(state_dict, strict=False)
+    model.load_state_dict(state_dict['state_dict'], strict=False)
 
     test_loss,test_acc = test(model, device, dloader_test, criterion, experiment_dir)
     logging.info('Test: Avg Loss: {:.4f} \t Avg Acc: {:.4f}'.format(test_loss, test_acc))
