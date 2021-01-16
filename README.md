@@ -51,5 +51,4 @@ Step-6: use the above finetuned model and evaluate the perfromance on test data.
 Step-7: Compare the test results from step-3 with step-6 to see the benefits of unsupervised/self-supervised pretraining
 
 ## Perfromance boost with Rotnet pretraining
-
-
+![alt text](https://github.com/anujshah1003/self_supervised_learning_pytorch/blob/master/readme_imgs/rotnet_tboard.png)
