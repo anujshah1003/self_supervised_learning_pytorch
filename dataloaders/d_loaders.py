@@ -34,7 +34,8 @@ def get_datasets(cfg):
 def loaders(cfg,get_dataset=False):
     
     if cfg.data_aug:
-        data_aug = transforms.Compose([transforms.RandomHorizontalFlip(p=0.5), transforms.RandomResizedCrop(128)])
+        data_aug = transforms.Compose([transforms.RandomResizedCrop(128)])
+ #       data_aug = transforms.Compose([transforms.RandomHorizontalFlip(p=0.5), transforms.RandomResizedCrop(128)])
 
         #data_aug = transforms.Compose([transforms.RandomHorizontalFlip(p=0.5),
         #transforms.RandomCrop(32, padding=4)])

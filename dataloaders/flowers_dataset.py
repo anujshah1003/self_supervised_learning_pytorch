@@ -110,7 +110,9 @@ def rotnet_collate_fn(batch):
     
     batch = default_collate(batch)
     #assert(len(batch) == 2)
-    batch_size, rotations, channels, height, width = batch[0].size()
+    # 10x4x3x128x128
+    # 40 x3x128x128
+    batch_size, rotations, channels, height, width = batch[0].size() 
     batch[0] = batch[0].view([batch_size * rotations, channels, height, width])
     batch[1] = batch[1].view([batch_size * rotations])
     return batch
@@ -162,13 +164,13 @@ if __name__ == '__main__':
     else:
         visualize(img,label)
     
-    data_val = DataLoader(dataset,batch_size=10,collate_fn=collate_func,shuffle=True)
+    data_loader = DataLoader(dataset,batch_size=10,collate_fn=collate_func,shuffle=True)
     
-    data, label,idx,img_names = next(iter(data_val))
+    data, label,idx,img_names = next(iter(data_loader))
     print(data.shape, label)
         
-    for data,label,idx,img_names in islice(data_val,4):
+    for data,label,idx,img_names in islice(data_loader,4):
         print(data.shape, label)
     
     visualize(data.numpy(),label.numpy())   
-    
+
