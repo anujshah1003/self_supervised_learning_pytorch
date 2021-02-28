@@ -49,8 +49,8 @@ def train(epoch, model, device, dataloader, optimizer, scheduler, criterion, exp
     save_path = experiment_dir + '/'
     os.makedirs(save_path, exist_ok=True)
     model.train()
-    for batch_idx, (data,label,_,_) in enumerate(tqdm(islice(dataloader,10))):
-#    for batch_idx, (data, label, _,_) in enumerate(tqdm(dataloader)):
+ #   for batch_idx, (data,label,_,_) in enumerate(tqdm(islice(dataloader,10))):
+    for batch_idx, (data, label, _,_) in enumerate(tqdm(dataloader)):
         data, label = data.to(device), label.to(device)
         #optimizer.zero_grad()
         output = model(data)
@@ -107,8 +107,8 @@ def train_and_evaluate(cfg):
     device = torch.device("cuda:{}".format(cfg.cuda_num) if use_cuda else "cpu")
     # initialize the tensorbiard summary writer
     #writer = SummaryWriter(experiment_dir + '/tboard' )
-    logs=os.path.join('experiments',cfg.exp_type,'tboard_sup')
-    writer = SummaryWriter(logs + '/rotnet_pretrain_4' )
+    logs=os.path.join('experiments',cfg.exp_type,'tboard_sup_demo')
+    writer = SummaryWriter(logs + '/rotnet_without_pretrain' )
 
     ## get the dataloaders
     dloader_train,dloader_val,dloader_test = dataloaders.get_dataloaders(cfg)
@@ -179,8 +179,10 @@ def train_and_evaluate(cfg):
 
     # follow the same setting as RotNet paper
     #model.parameters()
-    #optimizer = optim.SGD(model.parameters(), lr=float(cfg.lr), momentum=float(cfg.momentum), weight_decay=5e-4, nesterov=True)
-    optimizer = optim.Adam(model.parameters(), lr=float(cfg.lr))#, momentum=float(cfg.momentum), weight_decay=5e-4, nesterov=True)
+    if cfg.opt=='sgd':
+        optimizer = optim.SGD(model.parameters(), lr=float(cfg.lr), momentum=float(cfg.momentum), weight_decay=5e-4, nesterov=True)
+    elif cfg.opt=='adam':
+        optimizer = optim.Adam(model.parameters(), lr=float(cfg.lr))#, momentum=float(cfg.momentum), weight_decay=5e-4, nesterov=True)
 
     if cfg.scheduler:
         scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[60, 120, 160, 200], gamma=0.2)
@@ -222,7 +224,7 @@ def train_and_evaluate(cfg):
     logging.info('\nEvaluate test result on best ckpt')
     state_dict = torch.load(os.path.join(experiment_dir,'{}_best.pth'.format(cfg.network.lower())),\
                                 map_location=device)
-    model.load_state_dict(state_dict['state_dict'], strict=False)
+    model.load_state_dict(state_dict, strict=False)
 
     test_loss,test_acc = test(model, device, dloader_test, criterion, experiment_dir)
     logging.info('Test: Avg Loss: {:.4f} \t Avg Acc: {:.4f}'.format(test_loss, test_acc))
