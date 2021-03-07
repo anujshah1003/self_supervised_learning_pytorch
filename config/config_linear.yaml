@@ -1,0 +1,50 @@
+# Dataset Parameters
+num_classes: 5
+# define lebels to class dictionary
+labels_to_class:
+  0: 'daisy'
+  1: 'dandelion'
+  2: 'rose'
+  3: 'sunflower'
+  4: 'tulip'
+
+mean_val: [0.57711623,0.57658564,0.47776383]#[147.16463878,147.02933698,121.82977662]
+std_val: [0.09158824,0.09528065,0.20864842]#[23.35500145,24.29656621,53.20534792]
+
+#class_to_labels: {'daisy':0,'dandelion':1,'rose':2,'sunflower':3,'tulip':4}
+
+#paths
+root_path: 'D:\2020\Trainings\self_supervised_learning_pytorch'
+data_path: 'dataset'
+exp_type: 'self_supervised' # 'supervised' or 'self-supervised'
+save_dir: 'lin_exp_5'
+imgs_dir: 'flowers'
+labels_dir: 'annotations'
+log: 'train.log'
+feat_extract_exp_dir: 'ssl_rotnet'
+features: 'features_3'
+
+#pca
+pca_dim: False
+
+#model parameters
+network: 'log_reg'
+lr: 1e-4
+momentum: 9e-1
+scheduler: False
+opt: 'adam'#'sgd'
+
+# Training Parameters
+num_epochs: 30
+batch_size: 16
+mean_norm: False
+img_sz: 120
+val_split: 0.15
+cuda_num: 2
+use_cuda: False
+
+#saving parameters
+save_intermediate_weights: 2 # After how many epoch to save the weights
+
+
+

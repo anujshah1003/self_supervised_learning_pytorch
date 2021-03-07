@@ -94,7 +94,7 @@ def save_features_as_dict(model,dloader,sf,feat_path,label_path,num_batch=10):
 #%%
 if __name__=='__main__':
     
-    experiment_dir = r'D:\2020\Trainings\self_supervised_learning\experiments\self-supervised\ssl_rotnet'
+    experiment_dir = r'D:\2020\Trainings\self_supervised_learning_pytorch\experiments\self_supervised\ssl_rotnet'
     restore_file = 'resnet18_best.pth'
     config_file = 'config_ssl.yaml'
     
@@ -107,7 +107,7 @@ if __name__=='__main__':
     device = torch.device("cuda:{}".format(cfg.cuda_num) if use_cuda else "cpu")
     cfg.use_cuda=cfg.use_cuda
     cfg.batch_size=1
-    cfg.root_path = r'D:\2020\Trainings\self_supervised_learning'
+    cfg.root_path = r'D:\2020\Trainings\self_supervised_learning_pytorch'
     
     # for dataloader
     cfg.data_aug=False
@@ -131,7 +131,9 @@ if __name__=='__main__':
     dloader_train,dloader_val,dloader_test = dataloaders.get_dataloaders(cfg)
     
 #    layer_name = model.avgpool
-    layer_name=model.layer3[1].bn2#model.layer2[1].bn2
+#    layer_name=model.layer4[1]#model.layer2[1].bn2
+#    layer_name=model.layer3[1]
+    layer_name=model.layer2[1]
     summary(model,(3,128,128))
 
     
