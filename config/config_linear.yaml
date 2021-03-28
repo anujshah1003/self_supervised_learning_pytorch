@@ -8,16 +8,14 @@ labels_to_class:
   3: 'sunflower'
   4: 'tulip'
 
-mean_val: [0.57711623,0.57658564,0.47776383]#[147.16463878,147.02933698,121.82977662]
-std_val: [0.09158824,0.09528065,0.20864842]#[23.35500145,24.29656621,53.20534792]
-
+normalize: True
 #class_to_labels: {'daisy':0,'dandelion':1,'rose':2,'sunflower':3,'tulip':4}
 
 #paths
 root_path: 'D:\2020\Trainings\self_supervised_learning_pytorch'
 data_path: 'dataset'
 exp_type: 'self_supervised' # 'supervised' or 'self-supervised'
-save_dir: 'lin_exp_5'
+save_dir: 'lin_exp_2'
 imgs_dir: 'flowers'
 labels_dir: 'annotations'
 log: 'train.log'
@@ -25,17 +23,17 @@ feat_extract_exp_dir: 'ssl_rotnet'
 features: 'features_3'
 
 #pca
-pca_dim: False
+pca_dim: 300
 
 #model parameters
 network: 'log_reg'
-lr: 1e-4
+lr: 1e-3
 momentum: 9e-1
 scheduler: False
-opt: 'adam'#'sgd'
+opt: 'sgd'#'sgd','adam'
 
 # Training Parameters
-num_epochs: 30
+num_epochs: 100
 batch_size: 16
 mean_norm: False
 img_sz: 120

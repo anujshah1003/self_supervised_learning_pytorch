@@ -44,6 +44,6 @@ x_tr_pca = pca.fit_transform(x_tr)
 
 explained_variance = pca.explained_variance_ratio_
 explained_variance
-np.sum(explained_variance[0:10])
+np.sum(explained_variance[0:300])
 
 #feat_kpca = kpca.fit_transform(feature_vectors)

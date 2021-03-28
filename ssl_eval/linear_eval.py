@@ -145,7 +145,7 @@ def train(epoch,model,device,dataloader,optimizer,scheduler,criterion,experiment
     """ Train loop, predict rotations. """
     global iter_cnt
     progbar = tqdm(total=len(dataloader), desc='Train')
- #   progbar = tqdm(total=10, desc='Train')
+#    progbar = tqdm(total=10, desc='Train')
 
     loss_record = utils.RunningAverage()
     acc_record = utils.RunningAverage()
@@ -249,8 +249,10 @@ def test( model, device, dataloader, criterion, args):
 
 def train_and_evaluate(cfg,dloader_train,dloader_val,dloader_test,device,writer,experiment_dir):
     
-    optimizer = optim.Adam(model.parameters(), lr=float(cfg.lr))#, momentum=float(cfg.momentum), weight_decay=5e-4, nesterov=True)
-#    optimizer = optim.SGD(model.parameters(), lr=float(cfg.lr), momentum=float(cfg.momentum), weight_decay=5e-4, nesterov=True)
+    if cfg.opt=='adam':
+        optimizer = optim.Adam(model.parameters(), lr=float(cfg.lr))#, momentum=float(cfg.momentum), weight_decay=5e-4, nesterov=True)
+    elif cfg.opt=='sgd':
+        optimizer = optim.SGD(model.parameters(), lr=float(cfg.lr), momentum=float(cfg.momentum), weight_decay=5e-4, nesterov=True)
 
     if cfg.scheduler:
         scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[60, 120, 160, 200], gamma=0.2)
@@ -287,7 +289,6 @@ def train_and_evaluate(cfg,dloader_train,dloader_val,dloader_test,device,writer,
                                     
                                     best_model='{}_best.pth'.format(cfg.network.lower())
                                     )
-    writer.close()
     
 #    print('\nEvaluate on test')
     logging.info('\nEvaluate test result on best ckpt')
@@ -297,6 +298,8 @@ def train_and_evaluate(cfg,dloader_train,dloader_val,dloader_test,device,writer,
 
     test_loss,test_acc = test(model, device, dloader_test, criterion, experiment_dir)
     logging.info('Test: Avg Loss: {:.4f} \t Avg Acc: {:.4f}'.format(test_loss, test_acc))
+    writer.add_text('test performance on best ckpt','test_loss {}; test_acc {}'.format(test_loss,test_acc))
+    writer.close()
 
     # save the configuration file within that experiment directory
     utils.save_yaml(cfg,save_path=os.path.join(experiment_dir,'config_linear.yaml'))
@@ -308,9 +311,6 @@ if __name__=='__main__':
     
     config_file='../config/config_linear.yaml'
     cfg = utils.load_yaml(config_file,config_type='object')
-    cfg.normalize=True
-    cfg.lr=1e-3
-    cfg.num_epochs=100
     feature_dir=os.path.join(cfg.root_path,'experiments',cfg.exp_type,\
                                    cfg.feat_extract_exp_dir,cfg.features)
     
@@ -330,7 +330,7 @@ if __name__=='__main__':
     # initialize the tensorbiard summary writer
 #    writer = SummaryWriter(experiment_dir + '/tboard' )
     logs=os.path.join(cfg.root_path,'experiments',cfg.exp_type,\
-                      cfg.feat_extract_exp_dir,cfg.save_dir,'tboard_linear_with_pca')
+                      cfg.feat_extract_exp_dir,cfg.save_dir,'tboard_linear')
     writer = SummaryWriter(logs + '/lin_probe_{}'.format(cfg.features) )
     
     logging.info('load the data and the model ........')
